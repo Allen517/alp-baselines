@@ -322,7 +322,7 @@ class _LINE(object):
                 len_content = len(delta_c)
                 # print 'order2, content'
                 if opt_type=='adagrad':
-                    self.h_delta_c, self.embeddings['content'] = \
+                    self.h_delta['content'], self.embeddings['content'] = \
                                         self.update_vec('cnt_order2', self.h_delta['content'], delta_c
                                                         , self.embeddings['content'], len_content, self.t)
                 if opt_type=='adam':
@@ -463,8 +463,9 @@ class _LINE(object):
         ret = dict()
         node_embeddings_order1=self.get_one_embeddings(self.embeddings['order1'])
         ret['node_order1']=node_embeddings_order1
-        node_embeddings_order2=self.get_one_embeddings(self.embeddings['order2'])
-        ret['node_order2']=node_embeddings_order2
+        if order==2:
+            node_embeddings_order2=self.get_one_embeddings(self.embeddings['order2'])
+            ret['node_order2']=node_embeddings_order2
 
         if order==2 or order==3:
             content_embeddings = dict()

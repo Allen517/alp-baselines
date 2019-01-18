@@ -34,3 +34,9 @@ python ne_main.py --input data/test.src.net --output test.res --batch-size 6 --t
 python alp_main.py --embedding1 test.res.epoch5.node_order1 --embedding2 ffvm.res.epoch5.node --type-model lin --identity-linkage data/test.align --output test.alp --batch-size 4 --input-size 4 --epochs 10 --method pale --neg-ratio 5 --device :/cpu:0
 ```
 
+## IONE
+
+> Citation:
+```shell
+java -jar ione/IONE.jar --iters 1000000 --dims 8 --root-directory ../../gcn_for_alp/data/node50/ --anchor-file graph.anchors.labels.0.7.train --graph-x-file graph.src.s_0.3.c_0.8 --graph-x-output-file node50.ione.src.emb --graph-y-file graph.obj.s_0.3.c_0.8 --graph-y-output-file node50.ione.obj.emb
+```

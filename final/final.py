@@ -161,7 +161,7 @@ class FINAL(object):
 
         return s
 
-def read_graph(graph_file, graph_size):
+def read_adjlist(graph_file, graph_size):
     graph_dict = dict()
     graph_dict_back = list()
     idx = 0
@@ -182,6 +182,33 @@ def read_graph(graph_file, graph_size):
 
     return graph, graph_dict, graph_dict_back
 
+def read_edgelist(graph_file, graph_size):
+    graph_dict = dict()
+    graph_dict_back = list()
+    idx = 0
+    graph = sp.lil_matrix((graph_size, graph_size))
+    with open(graph_file, 'r') as fin:
+        for ln in fin:
+            elems = ln.strip().split()
+            if len(elems)<2:
+                continue
+            first_id_str = elems[0]
+            sec_id_str = elems[1]
+            if first_id_str not in graph_dict:
+                graph_dict[first_id_str] = idx
+                graph_dict_back.append(first_id_str)
+                idx += 1
+            if sec_id_str not in graph_dict:
+                graph_dict[sec_id_str] = idx
+                graph_dict_back.append(sec_id_str)
+                idx += 1
+            first_idx = graph_dict[first_id_str]
+            sec_idx = graph_dict[sec_id_str]
+            graph[first_idx, sec_idx] = 1
+            graph[sec_idx, first_idx] = 1
+
+    return graph, graph_dict, graph_dict_back
+
 def read_linkage(linkage_file, graph_g_dict, graph_g_size, graph_f_dict, graph_f_size):
     linkage = sp.lil_matrix((graph_g_size, graph_f_size))
     with open(linkage_file, 'r') as fin:
@@ -197,10 +224,15 @@ def read_linkage(linkage_file, graph_g_dict, graph_g_size, graph_f_dict, graph_f
 
     return linkage
 
-def main_proc(graph_files, graph_sizes, linkage_file, alpha, epoch, tol, output_file):
+def main_proc(graph_files, graph_sizes, linkage_file, alpha, epoch, tol, graph_format, test_anchor_file, output_file):
 
     graph_f_size = graph_sizes[0]
     graph_g_size = graph_sizes[1]
+
+    if graph_format=='adjlist':
+        read_graph = read_adjlist
+    if graph_format=='edgelist':
+        read_graph = read_edgelist
 
     graph_f, graph_f_dict, graph_f_dict_back = read_graph(graph_files[0], graph_f_size)
     graph_g, graph_g_dict, graph_g_dict_back = read_graph(graph_files[1], graph_g_size)

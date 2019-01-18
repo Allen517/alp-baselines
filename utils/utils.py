@@ -7,7 +7,7 @@ from collections import defaultdict
 from scipy.sparse.linalg.eigen.arpack import eigsh
 import sys
 
-def load_train_valid_labels(filename, valid_prop):
+def load_train_valid_labels(filename, lookups, valid_prop):
     lbs = dict()
     lbs['f2g'] = dict()
     lbs['f2g']['train'] = defaultdict(list)
@@ -18,7 +18,13 @@ def load_train_valid_labels(filename, valid_prop):
     with open(filename, 'r') as fin:
         for ln in fin:
             elems = ln.strip().split()
+            if elems[0] not in lookups['f']:
+                print elems[0]
+                continue
             for val in elems[1].split(';'):
+                if val not in lookups['g']:
+                    print val
+                    continue
                 if random.random()<valid_prop:
                     lbs['f2g']['train'][elems[0]].append(val)
                     lbs['g2f']['train'][val].append(elems[0])
@@ -31,6 +37,7 @@ def batch_iter(lbs, batch_size, neg_ratio, lookup_src, lookup_obj, src_lb_tag, o
     train_lb_src2obj = lbs['{}2{}'.format(src_lb_tag,obj_lb_tag)]['train']
     train_lb_obj2src = lbs['{}2{}'.format(obj_lb_tag,src_lb_tag)]['train']
     train_size = len(train_lb_src2obj)
+    print 'train_size:{}'.format(train_size)
     start_index = 0
     end_index = min(start_index+batch_size, train_size)
 

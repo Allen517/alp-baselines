@@ -3,24 +3,27 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from utils.graph import *
 from net_embed.line import *
 from net_embed.ffvm import *
+import os
 
 def parse_args():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
                             conflict_handler='resolve')
+    parser.add_argument('--gpu-id', required=False,
+                        help='Set env CUDA_VISIBLE_DEVICES', default="0")
     parser.add_argument('--input', required=True,
                         help='Input graph file')
     parser.add_argument('--output', required=True,
                         help='Output representation file')
+    parser.add_argument('--weighted', required=False, default=False,
+                        help='If the edge is weighted in edgelist format')
+    parser.add_argument('--directed', required=False, default=False,
+                        help='If the edge is directed in edgelist format')
     parser.add_argument('--last-emb-file', required=False,
                         help='Representation file from last training (For restoring the last training)')
-    parser.add_argument('--anchor-file', required=False,
-                        help='Anchor links file')
     parser.add_argument('--log-file', default='NETEMB',
                         help='logging file')
     parser.add_argument('--lr', default=.001, type=float,
                         help='Learning rate')
-    parser.add_argument('--gamma', default=.01, type=float,
-                        help='Gamma')
     parser.add_argument('--batch-size', default=1000, type=int,
                         help='Batch size')
     parser.add_argument('--table-size', default=1e8, type=int,
@@ -46,6 +49,10 @@ def main(args):
         from utils.graphx import Graph
     else:
         from utils.graph import Graph
+
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
+
     g = Graph()
     print "Reading..."
     if args.graph_format == 'adjlist':

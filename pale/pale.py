@@ -22,7 +22,8 @@ class PALE(object):
 		# Parameters
 		self.learning_rate = learning_rate
 		self.batch_size = batch_size
-		self.valid_prop = .9
+		self.valid = False
+		self.valid_prop = .9 if self.valid else 1.
 		self.valid_sample_size = 9
 
 		self.cur_epoch = 1
@@ -78,12 +79,16 @@ class PALE(object):
 					lookup[elems[0]] = idx
 					look_back.append(elems[0])
 					idx += 1
+			# print 'idx:{}'.format(idx), len(lookup), len(look_back)
 		return np.array(embedding), lookup, look_back
 
 	def _read_train_dat(self, embed1_file, embed2_file, label_file):
-		self.L = load_train_valid_labels(label_file, self.valid_prop)
 		self.X, self.lookup['f'], self.look_back['f'] = self._read_embeddings(embed1_file, self.lookup['f'], self.look_back['f'])
-		self.Y, self.lookup['f'], self.look_back['g'] = self._read_embeddings(embed2_file, self.lookup['g'], self.look_back['g'])
+		self.Y, self.lookup['g'], self.look_back['g'] = self._read_embeddings(embed2_file, self.lookup['g'], self.look_back['g'])
+		# print self.look_back['f'], len(self.look_back['f']), len(self.lookup['f'].keys())
+		# print self.look_back['g'], len(self.look_back['g'])
+		# print len(self.X), len(self.Y)
+		self.L = load_train_valid_labels(label_file, self.lookup, self.valid_prop)
 
 	def _init_weights(self, type_code_graph):
 		# Store layers weight & bias
@@ -157,6 +162,20 @@ class PALE(object):
 				) # batch_size*neg_ratio*n_input
 		self.dot_dist = tf.reduce_sum(tf.pow(valid-self.valid_inputs['g'],2.),axis=2)
 
+	# def pos_logic_validation(self, pos_f, pos_g):
+	# 	pos_f_idx = np.where(pos_f>=len(self.X))[0]
+	# 	pos_g_idx = np.where(pos_g>=len(self.Y))[0]
+
+	# 	illegal_idx = np.array(set(np.hstack(pos_f_idx, pos_g_idx)))
+	# 	for i in np.sort(illegal_idx)[::-1]:
+	# 		pos_f.pop(i)
+	# 		pos_g.pop(i)
+
+	# def neg_logic_validation(self, neg_f, neg_g):
+	# 	for k in len(neg_f):
+	# 		neg_f_idx = np.where(neg_f[k]>=len(self.X))[0]
+	# 		neg_g_idx = np.where(neg_g[k]>=len(self.X))[0]
+
 	def train_one_epoch(self):
 		sum_loss = 0.0
 
@@ -181,27 +200,31 @@ class PALE(object):
 			batch_id += 1
 
 		# valid process
-		valid_f, valid_g = valid_iter(self.L, self.valid_sample_size, self.lookup['f'], self.lookup['g'], 'f', 'g')
-		if not len(valid_f)==len(valid_g):
-			self.logger.info('The input label file goes wrong as the file format.')
-			return
-		valid_size = len(valid_f)
-		feed_dict = {
-			self.valid_inputs['f']:self.X[valid_f,:],
-			self.valid_inputs['g']:self.Y[valid_g,:]
-		}
-		valid_dist = self.sess.run(self.dot_dist,feed_dict)
+		if self.valid:
+			valid_f, valid_g = valid_iter(self.L, self.valid_sample_size, self.lookup['f'], self.lookup['g'], 'f', 'g')
+			if not len(valid_f)==len(valid_g):
+				self.logger.info('The input label file goes wrong as the file format.')
+				return
+			valid_size = len(valid_f)
+			feed_dict = {
+				self.valid_inputs['f']:self.X[valid_f,:],
+				self.valid_inputs['g']:self.Y[valid_g,:]
+			}
+			valid_dist = self.sess.run(self.dot_dist,feed_dict)
 
-		mrr = .0
-		for i in range(valid_size):
-			fst_dist = valid_dist[i][0]
-			pos = 1
-			for k in range(1,len(valid_dist[i])):
-				if fst_dist>=valid_dist[i][k]:
-					pos+=1
-			mrr += 1./pos
-		self.logger.info('Epoch={}, sum of loss={!s}, mrr in validation={}'
-							.format(self.cur_epoch, sum_loss/batch_id, mrr/valid_size))
+			mrr = .0
+			for i in range(valid_size):
+				fst_dist = valid_dist[i][0]
+				pos = 1
+				for k in range(1,len(valid_dist[i])):
+					if fst_dist>=valid_dist[i][k]:
+						pos+=1
+				mrr += 1./pos
+			self.logger.info('Epoch={}, sum of loss={!s}, mrr in validation={}'
+								.format(self.cur_epoch, sum_loss/batch_id, mrr/valid_size))
+		else:
+			self.logger.info('Epoch={}, sum of loss={!s}'
+								.format(self.cur_epoch, sum_loss/batch_id))
 		self.cur_epoch += 1
 
 	def _write_in_file(self, filename, vec, tag):

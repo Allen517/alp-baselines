@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import random
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from utils.graph import *
@@ -11,6 +13,8 @@ def parse_args():
     parser.add_argument('--gpu-id', required=False,
                         help='Set env CUDA_VISIBLE_DEVICES', default="0")
     parser.add_argument('--input', required=True,
+                        help='Input graph file')
+    parser.add_argument('--input-delimiter', required=False, default=' ',
                         help='Input graph file')
     parser.add_argument('--output', required=True,
                         help='Output representation file')
@@ -54,11 +58,12 @@ def main(args):
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
 
     g = Graph()
-    print "Reading..."
+    print("Reading...")
     if args.graph_format == 'adjlist':
-        g.read_adjlist(filename=args.input)
+        g.read_adjlist(filename=args.input, delimiter=args.input_delimiter)
     elif args.graph_format == 'edgelist':
-        g.read_edgelist(filename=args.input, weighted=args.weighted, directed=args.directed)
+        g.read_edgelist(filename=args.input, weighted=args.weighted
+                            , directed=args.directed, delimiter=args.input_delimiter)
     if args.method == 'line':
         model = LINE(g, lr=args.lr, batch_size=args.batch_size, epoch=args.epochs, 
                             rep_size=args.rep_size, table_size=args.table_size,

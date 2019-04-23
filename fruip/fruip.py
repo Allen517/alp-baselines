@@ -1,8 +1,10 @@
 # -*- coding:utf8 -*-
 
+from __future__ import print_function
+
 import numpy as np
 from collections import defaultdict
-from utils.graph import *
+from utils.graphx import *
 import sys
 
 class FRUIP(object):
@@ -121,7 +123,7 @@ class FRUIP(object):
 				align_res[self.look_back['f'][i]] = self.look_back['g'][max_val_idx]
 				used_idx[max_val_idx] = 1
 			if (i+1)%100==0:
-				print 'Finish {} alignments'.format(i+1)
+				print('Finish {} alignments'.format(i+1))
 
 		return align_res
 
@@ -152,7 +154,7 @@ class FRUIP(object):
 				align_res[self.look_back['f'][i]] = self.look_back['g'][max_val_idx]
 				used_idx[max_val_idx] = 1
 			if (i+1)%100==0:
-				print 'Finish {} alignments'.format(i+1)
+				print('Finish {} alignments'.format(i+1))
 
 		return align_res
 
@@ -167,7 +169,7 @@ class FRUIP(object):
 if __name__=='__main__':
 
 	if len(sys.argv)<8:
-		print 'please input [graph f, embedding of graph f, graph g, embedding of graph g, linkage, threshold, output file]'
+		print('please input [graph f, embedding of graph f, graph g, embedding of graph g, linkage, threshold, output file]')
 		sys.exit(1)
 
 	graph = defaultdict(Graph)

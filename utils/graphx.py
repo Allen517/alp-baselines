@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """Graph utilities."""
 
 # from time import time
@@ -25,9 +27,9 @@ class Graph(object):
             look_back.append(node)
             self.node_size += 1
 
-    def _read_adjlist(self, filename, split_token=' ', directed=True):
+    def _read_adjlist(self, filename, delimiter=',', directed=True):
         if not filename or not os.path.exists(filename):
-            print 'The file {} is not exist'.format(filename)
+            print('The file {} is not exist'.format(filename))
 
         if directed:
             def store_in_graph(elems):
@@ -50,50 +52,50 @@ class Graph(object):
         with open(filename, 'r') as fin:
             func = store_in_graph
             for ln in fin:
-                elems = ln.strip().split(split_token)
+                elems = ln.strip().split(delimiter)
                 if len(elems)<2:
                     continue
                 func(elems)
             fin.close()
 
-    def read_adjlist(self, filename, split_token=' ', directed=True):
+    def read_adjlist(self, filename, delimiter=',', directed=True):
         """ Read graph from adjacency file in which the edge must be unweighted
             the format of each line: v1 n1 n2 n3 ... nk
             :param filename: the filename of input file
         """
-        self._read_adjlist(filename, split_token, directed)
+        self._read_adjlist(filename, delimiter, directed)
         self.encode_node()
 
-    def read_edgelist(self, filename, split_token=' ', weighted=False, directed=False):
+    def read_edgelist(self, filename, delimiter=',', weighted=False, directed=False):
         """ Read graph from adjacency file in which the edge could be unweighted or weighted
             the format of each line: v1 n1 w(or Blank)
             :param filename: the filename of input file
         """
         if directed:
-            def read_unweighted(l, split_token):
-                src, dst = l.split(split_token)
+            def read_unweighted(l, delimiter):
+                src, dst = l.split(delimiter)
                 self.nodes.add(src)
                 self.nodes.add(dst)
                 self.G[src][dst] = 1.
                 self.num_of_edges += 1
 
-            def read_weighted(l, split_token):
-                src, dst, w = l.split(split_token)
+            def read_weighted(l, delimiter):
+                src, dst, w = l.split(delimiter)
                 self.nodes.add(src)
                 self.nodes.add(dst)
                 self.G[src][dst] = float(w)
                 self.num_of_edges += 1
         else:
-            def read_unweighted(l, split_token):
-                src, dst = l.split(split_token)
+            def read_unweighted(l, delimiter):
+                src, dst = l.split(delimiter)
                 self.nodes.add(src)
                 self.nodes.add(dst)
                 self.G[src][dst] = 1.0
                 self.G[dst][src] = 1.0
                 self.num_of_edges += 2
 
-            def read_weighted(l, split_token):
-                src, dst, w = l.split(split_token)
+            def read_weighted(l, delimiter):
+                src, dst, w = l.split(delimiter)
                 self.nodes.add(src)
                 self.nodes.add(dst)
                 self.G[src][dst] = float(w)
@@ -105,9 +107,9 @@ class Graph(object):
             if weighted:
                 func = read_weighted
             for ln in fin:
-                l = l.strip()
-                if not l:
+                ln = l.strip()
+                if not ln:
                     continue
-                func(l)
+                func(ln,delimiter)
             fin.close()
         self.encode_node()

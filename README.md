@@ -2,6 +2,8 @@
 > Citation: Kong, X., Zhang, J., & Yu, P. S. (2013). Inferring anchor links across multiple heterogeneous social networks. In Proceedings of the 22nd ACM international conference on Conference on information & knowledge management - CIKM ’13 (pp. 179–188).
 ```shell
 python alp_main.py --graph1 data/test.src.net --graph2 data/test.obj.net --identity-linkage data/test.align --output test.res --method mna
+
+python alp_main.py --graph1 ../../../data/alp-datasets/online-offline/online.adjlist --graph2 ../../../data/alp-datasets/online-offline/offline.adjlist --identity-linkage ../../half/data/online-offline/train-test/online-offline.douban.anchors.ptrain10.train --output online-offline.mna.p10 --method mna
 ```
 
 ## FINAL
@@ -32,6 +34,12 @@ python ne_main.py --input data/test.src.net --output test.res --batch-size 6 --t
 + Step 2: matching (PALE)
 ```shell
 python alp_main.py --embedding1 test.res.epoch5.node_order1 --embedding2 ffvm.res.epoch5.node --type-model lin --identity-linkage data/test.align --output test.alp --batch-size 4 --input-size 4 --epochs 10 --method pale --neg-ratio 5 --device :/cpu:0
+
+python alp_main.py --embedding1 source.epoch100.node_order1 --embedding2 target.epoch100.node_order1 --type-model mlp --identity-linkage ../../half/data/online-offline/train-test/online-offline.douban.anchors.ptrain10.train --output online-offline.pale.p10 --batch-size 128 --input-size 16 --hidden-size 8 --layers 2 --epochs 10000 --method pale --neg-ratio 15 --device :/cpu:0 --saving-step 10 --is-valid True --early-stop True
+```
+
+```shell
+python eval_pale.py -feat-src source.epoch100.node_order1 -feat-end target.epoch100.node_order1 -linkage ../../half/data/online-offline/train-test/online-offline.douban.anchors.ptrain10.test -model online-offline.pale.p10 -model-type mlp -n-layer 2 -n-cands 19 -output mrr.pale.p10
 ```
 
 ## IONE

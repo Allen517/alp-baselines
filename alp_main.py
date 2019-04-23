@@ -1,14 +1,18 @@
+from __future__ import print_function
+
 import numpy as np
 import random
 from collections import defaultdict
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from pale.pale import *
 from mna.MNA import *
-from utils.graph import *
+from utils.graphx import *
 from fruip.fruip import *
 from final.final import *
 import time
 import os
+
+from utils.LogHandler import LogHandler
 
 def parse_args():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
@@ -39,6 +43,10 @@ def parse_args():
                         help='Output file')
     parser.add_argument('--log-file', default='ALP',
                         help='logging file')
+    parser.add_argument('--is-valid', default=False, type=bool,
+                        help='If use validation in training')
+    parser.add_argument('--early-stop', default=False, type=bool,
+                        help='Early stop')
     parser.add_argument('--lr', default=.01, type=float,
                         help='Learning rate (used in PALE)')
     parser.add_argument('--batch-size', default=128, type=int,
@@ -74,17 +82,20 @@ def main(args):
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
 
+    logger = LogHandler('RUN.'+time.strftime('%Y-%m-%d',time.localtime(time.time())))
+    logger.info(args)
+
     SAVING_STEP = args.saving_step
     MAX_EPOCHS = args.epochs
     if args.method == 'pale':
         model = PALE(learning_rate=args.lr, batch_size=args.batch_size
                         , n_input=args.input_size, n_hidden=args.hidden_size, n_layer=args.layers
                         , files=[args.embedding1, args.embedding2, args.identity_linkage]
-                        , type_model = args.type_model
+                        , type_model = args.type_model, is_valid=args.is_valid
                         , log_file=args.log_file, device=args.device)
     if args.method == 'mna' or args.method == 'fruip':
         graph = defaultdict(Graph)
-        print "Loading graph..."
+        print("Loading graph...")
         if args.graph_format=='adjlist':
             if args.graph1:
                 graph['f'].read_adjlist(filename=args.graph1)
@@ -97,7 +108,8 @@ def main(args):
                 graph['g'].read_edgelist(filename=args.graph2)
 
         if args.method == 'mna':
-            model = MNA(graph=graph, anchorfile=args.identity_linkage, valid_prop=1., neg_ratio=3, log_file=args.log_file)
+            model = MNA(graph=graph, anchorfile=args.identity_linkage, valid_prop=1.\
+                        , neg_ratio=3, log_file=args.log_file)
         if args.method == 'fruip':
             embed_files = [args.embedding1, args.embedding2]
             model = FRUIP(graph=graph, embed_files=embed_files, linkage_file=args.identity_linkage)
@@ -109,14 +121,36 @@ def main(args):
                             , test_anchor_file=args.test_anchors, output_file=args.output)
 
     if args.method in ['pale']:
+        losses = np.zeros(MAX_EPOCHS)
+        val_scrs = np.zeros(MAX_EPOCHS)
+        best_scr = .0
+        best_epoch = 0
+        thres = 100
         for i in range(1,MAX_EPOCHS+1):
-            model.train_one_epoch()
+            losses[i-1], val_scrs[i-1] = model.train_one_epoch()
             if i>0 and i%SAVING_STEP==0:
-                model.save_models(args.output+'.epoch_'+str(i))
+                loss_mean = np.mean(losses[i-SAVING_STEP:i])
+                scr_mean = np.mean(val_scrs[i-SAVING_STEP:i])
+                logger.info('loss in last {} epoches: {}, validation in last {} epoches: {}'
+                    .format(SAVING_STEP, loss_mean, SAVING_STEP, scr_mean))
+                if scr_mean>best_scr:
+                    best_scr = scr_mean
+                    best_epoch = i
+                    model.save_models(args.output)
+                if args.early_stop and i>=thres*SAVING_STEP:
+                    cnt = 0
+                    for k in range(thres-1,-1,-1):
+                        cur_val = np.mean(val_scrs[i-(k+1)*SAVING_STEP:i-k*SAVING_STEP])
+                        if cur_val<best_scr:
+                            cnt += 1
+                    if cnt==thres and (i-best_epoch)>=thres*SAVING_STEP:
+                        logger.info('*********early stop*********')
+                        logger.info('The best epoch: {}\nThe validation score: {}'.format(best_epoch, best_scr))
+                        break
     if args.method in ['mna', 'fruip']:
         model.save_model(args.output)
     t2 = time.time()
-    print 'time cost:',t2-t1
+    print('time cost:',t2-t1)
 
 if __name__ == "__main__":
     main(parse_args())

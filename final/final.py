@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import scipy.sparse as sp
 import numpy as np
 import time
@@ -130,7 +132,7 @@ class FINAL(object):
             for k in range(K):
                 d = d + sp.csr_matrix(np.kron(E1[l].multiply(A1).dot(N1[:,k])
                                 , E2[l].multiply(A2).dot(N2[:,k])).reshape((-1,1)))
-        print 'Time for degree: {} sec\n'.format(time.time()-t1)
+        print('Time for degree: {} sec\n'.format(time.time()-t1))
 
         D = N.multiply(d)
         DD = D.power(-.5)
@@ -143,7 +145,7 @@ class FINAL(object):
         s = h
 
         for i in range(self.maxiter):
-            print 'iteration {}\n'.format(i)
+            print('iteration {}\n'.format(i))
             t2 = time.time()
             prev = s
             M = q.multiply(s)
@@ -155,7 +157,7 @@ class FINAL(object):
             s = (1-alpha)*h + (alpha*q).multiply(S) # add the prior part
             diff = norm(s-prev);
             
-            print 'Time for iteration {}: {} sec, diff = {}\n'.format(i, time.time()-t2, 100*diff)
+            print('Time for iteration {}: {} sec, diff = {}\n'.format(i, time.time()-t2, 100*diff))
             if diff < self.tol: # if converge
                 break
 

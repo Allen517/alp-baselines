@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import pickle as pkl
 import networkx as nx
@@ -7,7 +9,7 @@ from collections import defaultdict
 from scipy.sparse.linalg.eigen.arpack import eigsh
 import sys
 
-def load_train_valid_labels(filename, lookups, valid_prop):
+def load_train_valid_labels(filename, lookups, valid_prop, delimiter=','):
     lbs = dict()
     lbs['f2g'] = dict()
     lbs['f2g']['train'] = defaultdict(list)
@@ -17,128 +19,99 @@ def load_train_valid_labels(filename, lookups, valid_prop):
     lbs['g2f']['valid'] = defaultdict(list)
     with open(filename, 'r') as fin:
         for ln in fin:
-            elems = ln.strip().split()
-            if elems[0] not in lookups['f']:
-                print elems[0]
+            elems = ln.strip().split(delimiter)
+            if len(elems)!=2:
                 continue
-            for val in elems[1].split(';'):
-                if val not in lookups['g']:
-                    print val
-                    continue
-                if random.random()<valid_prop:
-                    lbs['f2g']['train'][elems[0]].append(val)
-                    lbs['g2f']['train'][val].append(elems[0])
-                else:
-                    lbs['f2g']['valid'][elems[0]].append(val)
-                    lbs['g2f']['valid'][val].append(elems[0])
+            nd_src,nd_end = elems
+            if nd_src not in lookups['f']:
+                continue
+            if nd_end not in lookups['g']:
+                continue
+            if np.random.random()<valid_prop:
+                lbs['f2g']['train'][nd_src].append(nd_end)
+                lbs['g2f']['train'][nd_end].append(nd_src)
+            else:
+                lbs['f2g']['valid'][nd_src].append(nd_end)
+                lbs['g2f']['valid'][nd_end].append(nd_src)
+    assert lbs['f2g']['train'] and lbs['g2f']['train']\
+                , 'Fail to read labels. The delimiter may be mal-used!'
     return lbs
 
-def batch_iter(lbs, batch_size, neg_ratio, lookup_src, lookup_obj, src_lb_tag, obj_lb_tag):
-    train_lb_src2obj = lbs['{}2{}'.format(src_lb_tag,obj_lb_tag)]['train']
-    train_lb_obj2src = lbs['{}2{}'.format(obj_lb_tag,src_lb_tag)]['train']
-    train_size = len(train_lb_src2obj)
-    print 'train_size:{}'.format(train_size)
+def batch_iter(lbs, batch_size, neg_ratio, lookup, lb_tag_src, lb_tag_end):
+    train_lbs = lbs['{}2{}'.format(lb_tag_src,lb_tag_end)]['train']
+    cands_end = list(lookup[lb_tag_end].keys())
+
     start_index = 0
+    train_size = len(train_lbs)
     end_index = min(start_index+batch_size, train_size)
 
-    src_lb_keys = train_lb_src2obj.keys()
-    obj_lb_keys = train_lb_obj2src.keys()
+    lb_keys_src = list(train_lbs.keys())
     shuffle_indices = np.random.permutation(np.arange(train_size))
     while start_index < end_index:
-        pos_src = list()
-        pos_obj = list()
-        neg_src = list()
-        neg_obj = list()
+        pos = {lb_tag_src:list(), lb_tag_end:list()}
+        neg = {lb_tag_src:list(), lb_tag_end:list()}
         for i in range(start_index,end_index):
             idx = shuffle_indices[i]
-            src_lb = src_lb_keys[idx]
-            if not src_lb in lookup_src:
+            src_lb = lb_keys_src[idx]
+            if not src_lb in lookup[lb_tag_src]:
                 continue
-            nd_src = lookup_src[src_lb] # idx of embedding in src network
-            obj_lbs = train_lb_src2obj[src_lb]
-            for obj_lb in obj_lbs:
-                cur_neg_src = list()
-                cur_neg_obj = list()
-                if not obj_lb in lookup_obj:
-                    continue
-                nd_obj = lookup_obj[obj_lb]
+            nd_idx = {lb_tag_src:-1, lb_tag_end:-1, 'rand':-1}
+            nd_idx[lb_tag_src] = lookup[lb_tag_src][src_lb] # idx in src network
+            lbs_idx_end = [lookup[lb_tag_end][lb_end] for lb_end in train_lbs[src_lb]]
+            for lb_idx in lbs_idx_end:
+                nd_idx[lb_tag_end] = lb_idx
+                neg_idx_cur = {lb_tag_src:list(), lb_tag_end:list()}
                 for k in range(neg_ratio):
-                    rand_nd_obj = None
-                    while not rand_nd_obj or rand_nd_obj in cur_neg_obj or rand_obj_lb in obj_lbs:
-                        rand_obj_lb_idx = random.randint(0, len(obj_lb_keys)-1)
-                        rand_obj_lb = obj_lb_keys[rand_obj_lb_idx]
-                        if not rand_obj_lb in lookup_obj:
-                            # print rand_obj_lb
-                            continue
-                        rand_nd_obj = lookup_obj[rand_obj_lb]
-                    cur_neg_src.append(nd_src)
-                    cur_neg_obj.append(rand_nd_obj)
-                pos_src.append(nd_src)
-                pos_obj.append(nd_obj)
-                neg_src.append(cur_neg_src)
-                neg_obj.append(cur_neg_obj)
+                    nd_idx['rand'] = -1
+                    while nd_idx['rand']<0 or nd_idx['rand'] in lbs_idx_end:
+                        nd_idx['rand'] = np.random.randint(0, len(cands_end))
+                    neg_idx_cur[lb_tag_src].append(nd_idx[lb_tag_src])
+                    neg_idx_cur[lb_tag_end].append(nd_idx['rand'])
+                pos[lb_tag_src].append(nd_idx[lb_tag_src])
+                pos[lb_tag_end].append(nd_idx[lb_tag_end])
+                neg[lb_tag_src].append(neg_idx_cur[lb_tag_src])
+                neg[lb_tag_end].append(neg_idx_cur[lb_tag_end])
 
         start_index = end_index
         end_index = min(start_index+batch_size, train_size)
+        
+        yield pos,neg
 
-        yield pos_src,pos_obj,neg_src,neg_obj
+def valid_iter(lbs, valid_sample_size, lookup, lb_tag_src, lb_tag_end):
+    valid_lbs = lbs['{}2{}'.format(lb_tag_src,lb_tag_end)]['valid']
+    cands_end = list(lookup[lb_tag_end].keys())
 
-def valid_iter(lbs, valid_sample_size, lookup_src, lookup_obj, src_lb_tag, obj_lb_tag):
-    valid_lb_src2obj = lbs['{}2{}'.format(src_lb_tag,obj_lb_tag)]['valid']
-    valid_lb_obj2src = lbs['{}2{}'.format(obj_lb_tag,src_lb_tag)]['valid']
-
-    valid_src = list()
-    valid_obj = list()
-    src_lb_keys = valid_lb_src2obj.keys()
-    obj_lb_keys = valid_lb_obj2src.keys()
-    for i in range(len(valid_lb_src2obj)):
-        cand_src = list()
-        cand_obj = list()
-        src_lb = src_lb_keys[i]
-        if not src_lb in lookup_src:
+    valid = {lb_tag_src:list(), lb_tag_end:list()}
+    lb_keys_src = list(valid_lbs.keys())
+    for lb_src in lb_keys_src:
+        if not lb_src in lookup[lb_tag_src]:
             continue
-        nd_src = lookup_src[src_lb] # idx of embedding in src network
-        obj_lbs = valid_lb_src2obj[src_lb]
-        for obj_lb in obj_lbs:
-            if not obj_lb in lookup_obj:
-                continue
-            nd_obj = lookup_obj[obj_lb]
-            cand_src.append(nd_src)
-            cand_obj.append(nd_obj)
+        nd_idx = {lb_tag_src:-1, lb_tag_end:-1, 'rand':-1}
+        nd_idx[lb_tag_src] = lookup[lb_tag_src][lb_src] # idx in src network
+        lbs_idx_end = [lookup[lb_tag_end][lb_end] for lb_end in valid_lbs[lb_src]]
+        for lb_idx in lbs_idx_end:
+            nd_idx[lb_tag_end] = lb_idx
+            cand = {lb_tag_src:list(),lb_tag_end:list()}
+            cand[lb_tag_src].append(nd_idx[lb_tag_src])
+            cand[lb_tag_end].append(nd_idx[lb_tag_end])
             for k in range(valid_sample_size-1):
-                rand_nd_obj = None
-                while not rand_nd_obj or rand_nd_obj in cand_obj or rand_obj_lb in obj_lbs:
-                    rand_obj_lb_idx = random.randint(0, len(obj_lb_keys)-1)
-                    rand_obj_lb = obj_lb_keys[rand_obj_lb_idx]
-                    if not rand_obj_lb in lookup_obj:
-                        continue
-                    rand_nd_obj = lookup_obj[rand_obj_lb]
-                cand_src.append(nd_src)
-                cand_obj.append(rand_nd_obj)
-            if (cand_src and cand_obj) and len(cand_src)==valid_sample_size and len(cand_obj)==valid_sample_size:
-                valid_src.append(cand_src)
-                valid_obj.append(cand_obj)
-                cand_src = list()
-                cand_obj = list()
+                nd_idx['rand'] = -1
+                while nd_idx['rand']<0 or nd_idx['rand'] in lbs_idx_end:
+                    nd_idx['rand'] = np.random.randint(0, len(cands_end))
+                cand[lb_tag_src].append(nd_idx[lb_tag_src])
+                cand[lb_tag_end].append(nd_idx['rand'])
+            if (cand[lb_tag_src] and cand[lb_tag_end])\
+                and len(cand[lb_tag_src])==valid_sample_size\
+                and len(cand[lb_tag_end])==valid_sample_size:
+                valid[lb_tag_src].append(cand[lb_tag_src])
+                valid[lb_tag_end].append(cand[lb_tag_end])
 
-    return valid_src, valid_obj
+    return valid
 
-def parse_index_file(filename):
-    """Parse index file."""
-    index = []
-    for line in open(filename):
-        index.append(int(line.strip()))
-    return index
-
-
-def sample_mask(idx, l):
-    """Create mask."""
-    mask = np.zeros(l)
-    mask[idx] = 1
-    return np.array(mask, dtype=np.bool)
-
-def read_embeddings(embed_file, lookup, look_back):
+def read_embeddings(embed_file):
     embedding = list()
+    lookup = dict()
+    look_back = list()
     with open(embed_file, 'r') as emb_handler:
         idx = 0
         for ln in emb_handler:
@@ -147,139 +120,9 @@ def read_embeddings(embed_file, lookup, look_back):
                 elems = ln.split()
                 if len(elems)==2:
                     continue
-                arr = np.array(map(float, elems[1:]))
-                embedding.append(arr/np.linalg.norm(arr))
+                embedding.append(list(map(float, elems[1:])))
                 lookup[elems[0]] = idx
                 look_back.append(elems[0])
                 idx += 1
+
     return np.array(embedding), lookup, look_back
-
-def load_data(dataset_str):
-    """Load data."""
-    names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
-    objects = []
-    for i in range(len(names)):
-        with open("data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
-            if sys.version_info > (3, 0):
-                objects.append(pkl.load(f, encoding='latin1'))
-            else:
-                objects.append(pkl.load(f))
-
-    x, y, tx, ty, allx, ally, graph = tuple(objects)
-    test_idx_reorder = parse_index_file("data/ind.{}.test.index".format(dataset_str))
-    test_idx_range = np.sort(test_idx_reorder)
-
-    if dataset_str == 'citeseer':
-        # Fix citeseer dataset (there are some isolated nodes in the graph)
-        # Find isolated nodes, add them as zero-vecs into the right position
-        test_idx_range_full = range(min(test_idx_reorder), max(test_idx_reorder)+1)
-        tx_extended = sp.lil_matrix((len(test_idx_range_full), x.shape[1]))
-        tx_extended[test_idx_range-min(test_idx_range), :] = tx
-        tx = tx_extended
-        ty_extended = np.zeros((len(test_idx_range_full), y.shape[1]))
-        ty_extended[test_idx_range-min(test_idx_range), :] = ty
-        ty = ty_extended
-
-    features = sp.vstack((allx, tx)).tolil()
-    features[test_idx_reorder, :] = features[test_idx_range, :]
-    adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
-
-    labels = np.vstack((ally, ty))
-    labels[test_idx_reorder, :] = labels[test_idx_range, :]
-
-    idx_test = test_idx_range.tolist()
-    idx_train = range(len(y))
-    idx_val = range(len(y), len(y)+500)
-
-    train_mask = sample_mask(idx_train, labels.shape[0])
-    val_mask = sample_mask(idx_val, labels.shape[0])
-    test_mask = sample_mask(idx_test, labels.shape[0])
-
-    y_train = np.zeros(labels.shape)
-    y_val = np.zeros(labels.shape)
-    y_test = np.zeros(labels.shape)
-    y_train[train_mask, :] = labels[train_mask, :]
-    y_val[val_mask, :] = labels[val_mask, :]
-    y_test[test_mask, :] = labels[test_mask, :]
-
-    return adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask
-
-
-def sparse_to_tuple(sparse_mx):
-    """Convert sparse matrix to tuple representation."""
-    def to_tuple(mx):
-        if not sp.isspmatrix_coo(mx):
-            mx = mx.tocoo()
-        coords = np.vstack((mx.row, mx.col)).transpose()
-        values = mx.data
-        shape = mx.shape
-        return coords, values, shape
-
-    if isinstance(sparse_mx, list):
-        for i in range(len(sparse_mx)):
-            sparse_mx[i] = to_tuple(sparse_mx[i])
-    else:
-        sparse_mx = to_tuple(sparse_mx)
-
-    return sparse_mx
-
-
-def preprocess_features(features):
-    """Row-normalize feature matrix and convert to tuple representation"""
-    rowsum = np.array(features.sum(1))
-    r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.
-    r_mat_inv = sp.diags(r_inv)
-    features = sp.coo_matrix(features)
-    features = r_mat_inv.dot(features)
-    return sparse_to_tuple(features)
-
-
-def normalize_adj(adj):
-    """Symmetrically normalize adjacency matrix."""
-    adj = sp.coo_matrix(adj)
-    rowsum = np.array(adj.sum(1))
-    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
-
-
-def preprocess_adj(adj):
-    """Preprocessing of adjacency matrix for simple GCN model and conversion to tuple representation."""
-    adj_normalized = normalize_adj(adj + sp.eye(adj.shape[0]))
-    return sparse_to_tuple(adj_normalized)
-
-
-def construct_feed_dict(features, support, labels, labels_mask, placeholders):
-    """Construct feed dictionary."""
-    feed_dict = dict()
-    feed_dict.update({placeholders['labels']: labels})
-    feed_dict.update({placeholders['labels_mask']: labels_mask})
-    feed_dict.update({placeholders['features']: features})
-    feed_dict.update({placeholders['support'][i]: support[i] for i in range(len(support))})
-    feed_dict.update({placeholders['num_features_nonzero']: features[1].shape})
-    return feed_dict
-
-
-def chebyshev_polynomials(adj, k):
-    """Calculate Chebyshev polynomials up to order k. Return a list of sparse matrices (tuple representation)."""
-    print("Calculating Chebyshev polynomials up to order {}...".format(k))
-
-    adj_normalized = normalize_adj(adj)
-    laplacian = sp.eye(adj.shape[0]) - adj_normalized
-    largest_eigval, _ = eigsh(laplacian, 1, which='LM')
-    scaled_laplacian = (2. / largest_eigval[0]) * laplacian - sp.eye(adj.shape[0])
-
-    t_k = list()
-    t_k.append(sp.eye(adj.shape[0]))
-    t_k.append(scaled_laplacian)
-
-    def chebyshev_recurrence(t_k_minus_one, t_k_minus_two, scaled_lap):
-        s_lap = sp.csr_matrix(scaled_lap, copy=True)
-        return 2 * s_lap.dot(t_k_minus_one) - t_k_minus_two
-
-    for i in range(2, k+1):
-        t_k.append(chebyshev_recurrence(t_k[-1], t_k[-2], scaled_laplacian))
-
-    return sparse_to_tuple(t_k)

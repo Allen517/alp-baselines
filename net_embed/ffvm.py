@@ -1,5 +1,7 @@
 # -*- coding:utf8 -*-
 
+from __future__ import print_function
+
 import random
 import math
 import numpy as np

@@ -1,5 +1,7 @@
 # -*- coding:utf8 -*-
 
+from __future__ import print_function
+
 import random
 import math
 import numpy as np
@@ -391,7 +393,7 @@ class _LINE(object):
         power = 0.75
         numNodes = self.node_size
 
-        print "Pre-procesing for non-uniform negative sampling!"
+        print("Pre-procesing for non-uniform negative sampling!")
         self.node_degree = np.zeros(numNodes) # out degree
 
         look_up = self.g.look_up_dict
@@ -463,11 +465,10 @@ class _LINE(object):
         ret = dict()
         node_embeddings_order1=self.get_one_embeddings(self.embeddings['order1'])
         ret['node_order1']=node_embeddings_order1
-        if order==2:
+        if order==2 or order==3:
             node_embeddings_order2=self.get_one_embeddings(self.embeddings['order2'])
             ret['node_order2']=node_embeddings_order2
-
-        if order==2 or order==3:
+        # if order==2 or order==3:
             content_embeddings = dict()
             content_embeddings=self.get_one_embeddings(self.embeddings['content'])
             ret['content']=content_embeddings

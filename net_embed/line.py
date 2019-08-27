@@ -511,15 +511,15 @@ class LINE(object):
                 # outfile-[node_embeddings/content-embeddings]-[src/obj]
                 fout = open('{}.{}'.format(outfile,c), 'w') 
                 node_num = len(vectors[c].keys())
-                fout.write("{} {}\n".format(node_num, self.rep_size))
+                fout.write("{},{}\n".format(node_num, self.rep_size))
                 for node, vec in vectors[c].items():
-                    fout.write("{} {}\n".format(node,' '.join([str(x) for x in vec])))
+                    fout.write("{},{}\n".format(node,','.join([str(x) for x in vec])))
                 fout.close()
         if self.order==3:
             fout = open('{}.node_all'.format(outfile), 'w') 
             node_num = len(vectors[c].keys())
-            fout.write("{} {}\n".format(node_num, self.rep_size*2))
+            fout.write("{},{}\n".format(node_num, self.rep_size*2))
             for node, vec in vectors['node_order1'].items():
-                fout.write("{} {} {}\n".format(node,' '.join([str(x) for x in vec])
-                                , ' '.join([str(x) for x in vectors['node_order2'][node]])))
+                fout.write("{},{},{}\n".format(node,','.join([str(x) for x in vec])
+                                , ','.join([str(x) for x in vectors['node_order2'][node]])))
             fout.close()

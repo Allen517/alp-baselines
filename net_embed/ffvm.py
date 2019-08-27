@@ -337,7 +337,7 @@ class FFVM(object):
                 # outfile-[node_embeddings/content-embeddings]-[src/obj]
                 fout = open('{}.{}'.format(outfile,c), 'w') 
                 node_num = len(vectors[c].keys())
-                fout.write("{} {}\n".format(node_num, self.rep_size))
+                fout.write("{},{}\n".format(node_num, self.rep_size))
                 for node, vec in vectors[c].items():
-                    fout.write("{} {}\n".format(node,' '.join([str(x) for x in vec])))
+                    fout.write("{},{}\n".format(node,','.join([str(x) for x in vec])))
                 fout.close()

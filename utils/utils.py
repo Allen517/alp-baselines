@@ -7,7 +7,7 @@ import scipy.sparse as sp
 import random
 from collections import defaultdict
 from scipy.sparse.linalg.eigen.arpack import eigsh
-import sys
+import os,sys
 
 def load_train_valid_labels(filename, lookups, valid_prop, delimiter=','):
     lbs = dict()
@@ -117,7 +117,7 @@ def read_embeddings(embed_file):
         for ln in emb_handler:
             ln = ln.strip()
             if ln:
-                elems = ln.split()
+                elems = ln.split(',')
                 if len(elems)==2:
                     continue
                 embedding.append(list(map(float, elems[1:])))
@@ -126,3 +126,30 @@ def read_embeddings(embed_file):
                 idx += 1
 
     return np.array(embedding), lookup, look_back
+
+def write_in_file(fout, vec, tag):
+    if len(vec.shape)>1:
+        column_size = vec.shape[1]
+    else:
+        column_size = 1
+    reshape_vec = vec.reshape(-1)
+    vec_size = len(reshape_vec)
+    fout.write(tag+'\n')
+    for i in range(0,vec_size,column_size):
+        fout.write('{}\n'.format(' '.join([str(reshape_vec[i+k]) for k in range(column_size)])))
+
+def format_crossmna_graph(filepath, outfile, layer_k, delimiter=','):
+    if os.path.exists(outfile):
+        return
+    with open(filepath, 'r') as fin, open(outfile, 'w') as fout:
+        cnt = 0
+        wrt_ln = ''
+        for ln in fin:
+            elems = ln.strip().split(delimiter)
+            wrt_ln += '{}\n'.format(','.join(['{}-{}'.format(layer_k,val) for val in elems]))
+            cnt += 1
+            if not cnt%1000:
+                fout.write(wrt_ln)
+                wrt_ln = '',
+        if cnt%1000:
+            fout.write(wrt_ln)

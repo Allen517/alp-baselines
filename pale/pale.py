@@ -212,7 +212,7 @@ class PALE(object):
             for i in range(0,vec_size,column_size):
                 res_handler.write('{}\n'.format(' '.join([str(reshape_vec[i+k]) for k in range(column_size)])))
 
-    def save_models(self, filename):
+    def save_model(self, filename):
         if os.path.exists(filename):
             os.remove(filename)
         for k,v in self.weights.items():

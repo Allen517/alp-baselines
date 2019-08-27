@@ -12,7 +12,7 @@ from utils.LogHandler import LogHandler
 
 class _MNA(object):
 
-    def __init__(self, graph, anchorfile, valid_prop, neg_ratio, log_file):
+    def __init__(self, graph, attr_file, anchorfile, use_net, valid_prop, neg_ratio, log_file):
         if os.path.exists('log/'+log_file+'.log'):
             os.remove('log/'+log_file+'.log')
         self.logger = LogHandler(log_file)
@@ -21,6 +21,7 @@ class _MNA(object):
             self.logger.error('The graph must contain src and target graphs.')
             return
 
+        self.use_net=use_net
         self.graph = graph
         self.lookup = dict()
         self.lookup['f'] = self.graph['f'].look_up_dict
@@ -30,26 +31,43 @@ class _MNA(object):
         self.look_back['g'] = self.graph['g'].look_back_list
         self.L = load_train_valid_labels(anchorfile, self.lookup, valid_prop)
 
+        self.attributes = dict()
+        if attr_file:
+            self.attributes['f']=self._set_node_attributes(attr_file[0])
+            self.attributes['g']=self._set_node_attributes(attr_file[1])
+
         self.neg_ratio = neg_ratio
         self.batch_size = 1024
 
         self.clf = svm.SVC(probability=True)
 
-    def __get_pair_features(self, src_nds, target_nds):
+    def _set_node_attributes(self, attr_file):
+        node_attributes = defaultdict(list)
+        if not attr_file:
+            return None
+        with open(attr_file, 'r') as fin:
+            for ln in fin:
+                elems = ln.strip().split(',')
+                node_attributes[elems[0]]=list(map(float,elems[1:]))
+        return node_attributes
+
+    def _get_pair_features(self, src_nds, target_nds):
         pair_features = list()
         if len(src_nds)!=len(target_nds):
-            self.logger.warn('The size of sampling in processing __get_pair_features is not equal.')
+            self.logger.warn('The size of sampling in processing _get_pair_features is not equal.')
             yield pair_features
         for i in range(len(src_nds)):
-            src_nd, target_nd = src_nds[i],target_nds[i]
+            src_nd_idx, target_nd_idx = src_nds[i],target_nds[i]
+            src_nd = self.look_back['f'][src_nd_idx]
+            target_nd = self.look_back['g'][target_nd_idx]
 
             src_neighbor_anchors = set()
-            for src_nd_to in self.graph['f'].G[self.look_back['f'][src_nd]]:
+            for src_nd_to in self.graph['f'].G[src_nd]:
                 if src_nd_to in self.L['f2g']['train']:
                     src_neighbor_anchors.add(src_nd_to)
 
             target_neighbor_anchors = set()
-            for target_nd_to in self.graph['g'].G[self.look_back['g'][target_nd]]:
+            for target_nd_to in self.graph['g'].G[target_nd]:
                 if target_nd_to in self.L['g2f']['train']:
                     target_neighbor_anchors.add(target_nd_to)
 
@@ -62,11 +80,22 @@ class _MNA(object):
                         cnt_common_neighbors += 1.
                         AA_measure += 1./np.log((len(self.graph['f'].G[sna])\
                                                 +len(self.graph['g'].G[self.L['f2g']['train'][sna][k]]))/2.)
-            jaccard = cnt_common_neighbors/(len(self.graph['f'].G[self.look_back['f'][src_nd]])\
-                                            +len(self.graph['g'].G[self.look_back['g'][target_nd]])\
+            jaccard = cnt_common_neighbors/(len(self.graph['f'].G[src_nd])\
+                                            +len(self.graph['g'].G[target_nd])\
                                             -cnt_common_neighbors+1e-6)
 
-            yield [cnt_common_neighbors, jaccard, AA_measure]
+            # print(self.attributes['f'][src_nd], self.attributes['g'][target_nd])
+            feat_net = []
+            feat_attr = []
+            if self.use_net:
+                feat_net = [cnt_common_neighbors, jaccard, AA_measure]
+            if len(self.attributes)>0:
+                feat_len = len(self.attributes['f'][src_nd])
+                feat_attr = [1-self.attributes['f'][src_nd][k]\
+                                +self.attributes['g'][target_nd][k] for k in range(feat_len)]
+
+            # print(len(feat_net), len(feat_attr))
+            yield feat_net+feat_attr
 
     def train(self):
 
@@ -79,27 +108,32 @@ class _MNA(object):
             if not len(pos['f'])==len(pos['g']) and not len(neg['f'])==len(neg['g']):
                 self.logger.info('The input label file goes wrong as the file format.')
                 continue
-            pos_features = list(self.__get_pair_features(pos['f'], pos['g']))
+            pos_features = list(self._get_pair_features(pos['f'], pos['g']))
+            # print('feat_len (pos):',len(pos_features[0]))
             X.extend(pos_features)
             Y.extend([1 for m in range(len(pos_features))])
 
             for k in range(self.neg_ratio):
-                neg_features = list(self.__get_pair_features(neg['f'][k], neg['g'][k]))
+                neg_features = list(self._get_pair_features(neg['f'][k], neg['g'][k]))
                 X.extend(neg_features)
+                # print('feat_len (neg):',len(neg_features[0]))
                 Y.extend([-1 for m in range(len(neg_features))])
 
             self.logger.info('Training Model...')
+            print(len(X), len(X[0]), len(Y))
             self.clf.fit(X,Y)
+            print(self.clf)
             self.logger.info('Training score: %f'%self.clf.score(X,Y))
             self.logger.info('Complete Training process...')
 
 class MNA(object):
 
-    def __init__(self, graph, anchorfile, valid_prop, neg_ratio, log_file):
+    def __init__(self, graph, attr_file, anchorfile, use_net, valid_prop, neg_ratio, log_file):
         # training
-        self.model = _MNA(graph, anchorfile, valid_prop, neg_ratio, log_file)
+        self.model = _MNA(graph, attr_file, anchorfile, use_net, valid_prop, neg_ratio, log_file)
         self.model.train()
 
     def save_model(self, modelfile):
         modelfile = modelfile+'.pkl'
         joblib.dump(self.model.clf, modelfile)
+        print("Save model in %s"%(modelfile))

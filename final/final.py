@@ -226,7 +226,7 @@ def read_linkage(linkage_file, graph_g_dict, graph_g_size, graph_f_dict, graph_f
 
     return linkage
 
-def main_proc(graph_files, graph_sizes, linkage_file, alpha, epoch, tol, graph_format, test_anchor_file, output_file):
+def main_proc(graph_files, graph_sizes, linkage_file, alpha, epoch, tol, graph_format, output_file):
 
     graph_f_size = graph_sizes[0]
     graph_g_size = graph_sizes[1]

@@ -10,7 +10,7 @@ __author__ = "WANG Yongqing"
 __email__ = "wangyongqing@ict.ac.cn"
 
 
-class Graph(object):
+class GraphX(object):
     def __init__(self):
         self.G = defaultdict(dict)
         self.nodes = set()

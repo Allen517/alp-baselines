@@ -1,1 +1,5 @@
 *.py linguist-language=python
+*.net linguist-language=python
+*.align linguist-language=python
+*.train linguist-language=python
+*.test linguist-language=python

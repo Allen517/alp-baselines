@@ -63,7 +63,7 @@ python alp_main.py --embeddings test.res.epoch5.node_order1 ffvm.res.epoch5.node
 
 + Implementation
 
-See Author's implementation: https://github.com/ColaLL/IONE
+See [Author's implementation](https://github.com/ColaLL/IONE)
 
 ### CROSSMNA (Supervised Manner, Structure-based)
 

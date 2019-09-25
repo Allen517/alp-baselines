@@ -4,7 +4,7 @@ This project contains baselines, including MNA, PALE, IONE, FINAL, FRUI-P, CROSS
 
 ### MNA
 
-+ Citation: Kong, X., Zhang, J., & Yu, P. S. (2013). Inferring anchor links across multiple heterogeneous social networks. In Proceedings of the 22nd ACM international conference on Conference on information & knowledge management - CIKM ’13 (pp. 179–188).
++ Citation: ``Kong, X., Zhang, J., & Yu, P. S. (2013). Inferring anchor links across multiple heterogeneous social networks. In Proceedings of the 22nd ACM international conference on Conference on information & knowledge management - CIKM ’13 (pp. 179–188).``
 
 + Implementation
 

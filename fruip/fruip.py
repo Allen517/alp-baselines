@@ -31,11 +31,11 @@ class FRUIP(object):
 		with open(emb_file, 'r') as embed_handler:
 			for i,ln in enumerate(embed_handler):
 				if i==0:
-					_, feat_num = map(int, ln.strip().split())
+					_, feat_num = map(int, ln.strip().split(','))
 					emb = np.zeros((node_size, feat_num))
 					continue
-				elems = ln.strip().split()
-				emb[look_up[elems[0]]] = map(float, elems[1:])
+				elems = ln.strip().split(',')
+				emb[int(look_up[elems[0]])] = list(map(float, elems[1:]))
 
 		return emb
 
@@ -43,7 +43,7 @@ class FRUIP(object):
 		anchors = list()
 		with open(anchor_file, 'r') as anchor_handler:
 			for ln in anchor_handler:
-				elems = ln.strip().split()
+				elems = ln.strip().split(',')
 				anchors.append((elems[0], elems[1]))
 
 		return anchors
@@ -163,7 +163,7 @@ class FRUIP(object):
 
 	def save_model(self, output):
 		with open(output, 'w') as fout:
-			for k,v in self.align_res.iteritems():
+			for k,v in self.align_res.items():
 				fout.write('{} {}\n'.format(k,v))
 
 if __name__=='__main__':

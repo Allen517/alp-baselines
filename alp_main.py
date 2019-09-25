@@ -132,7 +132,7 @@ def main(args):
                         logger.info('The best epoch: {}\nThe validation score: {}'.format(best_epoch, best_scr))
                         break
     if args.method == 'mna' or args.method == 'fruip':
-        graph = defaultdict(GraphX)
+        graph = defaultdict(Graph)
         print("Loading graph...")
         if len(args.graphs)!=2:
             logger.error('#####The input graphs must be pairwise!#####')

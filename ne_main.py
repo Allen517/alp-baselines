@@ -5,6 +5,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from utils.graph import *
 from net_embed.line import *
 from net_embed.ffvm import *
+from utils.graph import Graph
 import os
 
 def parse_args():
@@ -14,7 +15,7 @@ def parse_args():
                         help='Set env CUDA_VISIBLE_DEVICES', default="0")
     parser.add_argument('--input', required=True,
                         help='Input graph file')
-    parser.add_argument('--input-delimiter', required=False, default=' ',
+    parser.add_argument('--input-delimiter', required=False, default=',',
                         help='Input graph file')
     parser.add_argument('--output', required=True,
                         help='Output representation file')
@@ -36,7 +37,7 @@ def parse_args():
                         help='Number of latent dimensions to learn for each node.')
     parser.add_argument('--epochs', default=5, type=int,
                         help='The training epochs')
-    parser.add_argument('--method', required=True, choices=['line', 'ffvmx'],
+    parser.add_argument('--method', required=True, choices=['line', 'ffvm'],
                         help='The learning method')
     parser.add_argument('--graph-format', default='adjlist', choices=['adjlist', 'edgelist'],
                         help='Input graph format')
@@ -49,10 +50,6 @@ def parse_args():
 
 
 def main(args):
-    if 'x' in args.method:
-        from utils.graphx import Graph
-    else:
-        from utils.graph import Graph
 
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
@@ -69,7 +66,7 @@ def main(args):
                             rep_size=args.rep_size, table_size=args.table_size,
                             order=args.order, outfile=args.output, log_file=args.log_file, 
                             last_emb_file=args.last_emb_file, negative_ratio=args.neg_ratio)
-    if args.method == 'ffvmx':
+    if args.method == 'ffvm':
         model = FFVM(g, lr=args.lr, batch_size=args.batch_size, epoch=args.epochs, 
                             rep_size=args.rep_size, negative_ratio=args.neg_ratio, outfile=args.output,
                             last_emb_file=args.last_emb_file, log_file=args.log_file)

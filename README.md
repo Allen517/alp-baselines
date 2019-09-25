@@ -14,7 +14,7 @@ python alp_main.py --method mna --graphs data/test.src.net data/test.obj.net --i
 
 ### FINAL
 
-+ Citation: Zhang, S. (2016). FINAL: Fast Attributed Network Alignment. In Proceedings of the 22th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining - KDD '16 (pp. 421–434).
++ Citation: ``Zhang, S. (2016). FINAL: Fast Attributed Network Alignment. In Proceedings of the 22th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining - KDD '16 (pp. 421–434).``
 
 + Implementation
 
@@ -23,7 +23,7 @@ python alp_main.py --method final --graphs data/test.src.net data/test.obj.net -
 ```
 
 ### FRUI-P
-+ Citation: Zhou, X., Liang, X., Member, S., Du, X., & Zhao, J. (2018). Structure Based User Identification across Social Networks. IEEE Transactions on Knowledge and Data Engineering - TKDE, 30(6), 1178–1191.
++ Citation: ``Zhou, X., Liang, X., Member, S., Du, X., & Zhao, J. (2018). Structure Based User Identification across Social Networks. IEEE Transactions on Knowledge and Data Engineering - TKDE, 30(6), 1178–1191.``
 
 + Implementation
 
@@ -41,7 +41,7 @@ python alp_main.py --method fruip --embeddings test.res.epoch5.node_order1 ffvm.
 
 ### PALE
 
-+ Citation: Man, T., Shen, H., Liu, S., Jin, X., & Cheng, X. (2016). Predict anchor links across social networks via an embedding approach. International Joint Conference on Artificial Intelligence - IJCAI (1823–1829).
++ Citation: ``Man, T., Shen, H., Liu, S., Jin, X., & Cheng, X. (2016). Predict anchor links across social networks via an embedding approach. International Joint Conference on Artificial Intelligence - IJCAI (1823–1829).``
 
 + Implementation
 
@@ -59,7 +59,7 @@ python alp_main.py --embeddings test.res.epoch5.node_order1 ffvm.res.epoch5.node
 
 ### IONE
 
-+ Citation: Liu, L., Cheung, W. K., Li, X., & Liao, L. (2016). Aligning Users Across Social Networks Using Network Embedding. International Joint Conference on Artificial Intelligence - IJCAI (pp. 1774–1780). 
++ Citation: ``Liu, L., Cheung, W. K., Li, X., & Liao, L. (2016). Aligning Users Across Social Networks Using Network Embedding. International Joint Conference on Artificial Intelligence - IJCAI (pp. 1774–1780).``
 
 + Implementation
 
@@ -67,7 +67,7 @@ See [Author's implementation][https://github.com/ColaLL/IONE]
 
 ### CROSSMNA
 
-+ Citation: Chu, X., Fan, X., Yao, D., Zhu, Z., Huang, J., & Bi, J. (2019). Cross-Network Embedding for Multi-Network Alignment. The World Wide Web Conference - WWW (pp. 273-284).
++ Citation: ``Chu, X., Fan, X., Yao, D., Zhu, Z., Huang, J., & Bi, J. (2019). Cross-Network Embedding for Multi-Network Alignment. The World Wide Web Conference - WWW (pp. 273-284).``
 
 + Implementation
 
@@ -77,7 +77,7 @@ python alp_main.py --graphs data/test.src.net data/test.obj.net --identity-linka
 
 ### REGAL
 
-+ Citation: Heimann, M., Shen, H., Safavi, T., & Koutra, D. (2018, October). Regal: Representation learning-based graph alignment. Proceedings of the 27th ACM International Conference on Information and Knowledge Management - CIKM (pp. 117-126)
++ Citation: ``Heimann, M., Shen, H., Safavi, T., & Koutra, D. (2018, October). Regal: Representation learning-based graph alignment. Proceedings of the 27th ACM International Conference on Information and Knowledge Management - CIKM (pp. 117-126)``
 
 + Implementation
 

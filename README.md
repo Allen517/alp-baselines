@@ -32,6 +32,8 @@ python alp_main.py --method final --graphs data/test.src.net data/test.obj.net -
 python ne_main.py --input data/test.src.net --output ffvm.res --batch-size 6 --table-size 100 --rep-size 4 --method ffvmx --neg-ratio 2 --order 1
 ```
 
+### 
+
 > Step 2: matching (FRUI-P)
 ```shell
 python alp_main.py --method fruip --embeddings test.res.epoch5.node_order1 ffvm.res.epoch5.node --graphs data/test.src.net data/test.obj.net --identity-linkage data/test.align --output test.fruip --epochs 10
@@ -61,6 +63,24 @@ python alp_main.py --embeddings test.res.epoch5.node_order1 ffvm.res.epoch5.node
 
 + Implementation
 
+See [Author's implementation][https://github.com/ColaLL/IONE]
+
+### CROSSMNA
+
++ Citation: Chu, X., Fan, X., Yao, D., Zhu, Z., Huang, J., & Bi, J. (2019). Cross-Network Embedding for Multi-Network Alignment. The World Wide Web Conference - WWW (pp. 273-284).
+
++ Implementation
+
 ```shell
-java -jar ione/IONE.jar --iters 1000000 --dims 8 --root-directory ../../gcn_for_alp/data/node50/ --anchor-file graph.anchors.labels.0.7.train --graph-x-file graph.src.s_0.3.c_0.8 --graph-x-output-file node50.ione.src.emb --graph-y-file graph.obj.s_0.3.c_0.8 --graph-y-output-file node50.ione.obj.emb
+python alp_main.py --graphs data/test.src.net data/test.obj.net --identity-linkage data/test.align --log-file test.log --batch-size 4 --epochs 10 --table-size 1000 --method crossmna --lr .01 --nd-rep-size 4 --layer-rep-size 8 --neg-ratio 5 --output test.crossmna.out
+```
+
+### REGAL
+
++ Citation: Heimann, M., Shen, H., Safavi, T., & Koutra, D. (2018, October). Regal: Representation learning-based graph alignment. Proceedings of the 27th ACM International Conference on Information and Knowledge Management - CIKM (pp. 117-126)
+
++ Implementation
+
+```shell
+python regal/regal.py --input data/test.src.net data/test.obj.net --output test.regal.out
 ```

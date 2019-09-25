@@ -43,13 +43,13 @@ python alp_main.py --method fruip --embeddings test.res.epoch5.node_order1 ffvm.
 
 + Implementation
 
-  + Step 1: network embedding (LINE)
+> Step 1: network embedding (LINE)
 
 ```shell
 python ne_main.py --input data/test.src.net --output test.res --batch-size 6 --table-size 100 --rep-size 4 --method line --neg-ratio 2 --order 1
 ```
 
-  + Step 2: matching (PALE)
+> Step 2: matching (PALE)
 
 ```shell
 python alp_main.py --embeddings test.res.epoch5.node_order1 ffvm.res.epoch5.node --type-model lin --identity-linkage data/test.align --output test.alp --batch-size 4 --input-size 4 --epochs 10 --method pale --neg-ratio 5 --device :/cpu:0

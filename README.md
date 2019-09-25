@@ -28,13 +28,11 @@ python alp_main.py --method final --graphs data/test.src.net data/test.obj.net -
 + Implementation
 
   + Step 1: network embedding (FFVM)
-
 ```shell
 python ne_main.py --input data/test.src.net --output ffvm.res --batch-size 6 --table-size 100 --rep-size 4 --method ffvmx --neg-ratio 2 --order 1
 ```
 
   + Step 2: matching (FRUI-P)
-
 ```shell
 python alp_main.py --method fruip --embeddings test.res.epoch5.node_order1 ffvm.res.epoch5.node --graphs data/test.src.net data/test.obj.net --identity-linkage data/test.align --output test.fruip --epochs 10
 ```

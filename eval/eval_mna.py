@@ -1,5 +1,10 @@
 from __future__ import print_function
 
+import sys,os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))#存放c.py所在的绝对路径
+
+sys.path.append(BASE_DIR)
+
 from eval.eval import *
 from utils.graphx import *
 from collections import defaultdict
@@ -16,7 +21,9 @@ class Eval_MNA(Eval):
         for kw in kwargs.keys():
             assert kw in allows_keys, 'Invalid file inputs: '+kw
 
+        # print(kwargs['use_net'])
         self.use_net = kwargs['use_net']
+        # print(self.use_net)
 
         self.graphs = {
                 'src': GraphX(),
@@ -62,7 +69,7 @@ class Eval_MNA(Eval):
             'test': defaultdict(list)
         }
         for tag in ['train', 'test']:
-            with open('%s.train'%filepath, 'r') as fin:
+            with open('%s.%s'%(filepath,tag), 'r') as fin:
                 for ln in fin:
                     elems = ln.strip().split(',')
                     if len(elems)!=2:
@@ -110,7 +117,9 @@ class Eval_MNA(Eval):
 
         feat_attr = []
         if len(self.inputs)>0:
-            feat_len = len(self.inputs['src'][nd_from])
+            if nd_from not in self.inputs['src'] or nd_to not in self.inputs['end']\
+                 or len(self.inputs['src'][nd_from])!=len(self.inputs['end'][nd_to]):
+                return []
             feat_len = len(self.inputs['src'][nd_from])
             feat_attr = [1-self.inputs['src'][nd_from][k]\
                             +self.inputs['end'][nd_to][k] for k in range(feat_len)]
@@ -153,10 +162,16 @@ class Eval_MNA(Eval):
                 'neg': list(),
             }
 
-            for nd_from, nds_to in self.labels['src2end']['train'].items():
+            max_feat_len = 0
+            for nd_from, nds_to in self.labels['src2end']['test'].items():
                 for nd_to in nds_to:
 
-                    inputs_batch['pos'].append(self._get_pair_features(nd_from, nd_to))
+                    pos_pair_features = self._get_pair_features(nd_from, nd_to)
+                    if len(pos_pair_features)<1 or len(pos_pair_features)<max_feat_len:
+                        continue
+                    if max_feat_len<len(pos_pair_features):
+                        max_feat_len=len(pos_pair_features)
+                    inputs_batch['pos'].append(pos_pair_features)
                     node_pairs['pos'].append([nd_from, nd_to])
 
                     rand_nds = set()
@@ -165,7 +180,11 @@ class Eval_MNA(Eval):
                         while rand_nd_to in rand_nds or rand_nd_to in nds_to:
                             rand_nd_to = to_keys[np.random.randint(0, to_size)]
                         rand_nds.add(rand_nd_to)
-                        inputs_batch['neg'].append(self._get_pair_features(nd_from, rand_nd_to))
+                        neg_pair_features = self._get_pair_features(nd_from, rand_nd_to)
+                        if len(neg_pair_features)<1 or len(neg_pair_features)<max_feat_len:
+                            k-=1
+                            continue
+                        inputs_batch['neg'].append(neg_pair_features)
                         node_pairs['neg'].append([nd_from, rand_nd_to])
 
                     cnt += 1
@@ -181,15 +200,21 @@ class Eval_MNA(Eval):
             cnt = 0
             # print(len(node_pairs['pos']),len(node_pairs['neg']), len(model_res['pos']), len(model_res['neg']))
             for i in range(len(node_pairs['pos'])):
+                is_valid = True
                 # print(model_res['pos'])
                 anchor_dist = model_res['pos'][i][0]
                 # print('anchor dist:',anchor_dist)
                 pred_pos = 1
                 for k in range(n_cands):
+                    if i*n_cands+k>=len(model_res['neg']):
+                        is_valid = False
+                        continue
                     noise_dist = model_res['neg'][i*n_cands+k][0]
                     # print('noise_dist:',noise_dist)
                     if anchor_dist>=noise_dist:
                         pred_pos += 1
+                if not is_valid:
+                    continue
                 cur_mrr = 1./pred_pos
                 mrr_list += cur_mrr,
                 cnt += 1
@@ -235,10 +260,16 @@ class Eval_MNA(Eval):
                 'neg': list(),
             }
 
-            for nd_from, nds_to in self.labels['src2end']['train'].items():
+            max_feat_len = 0
+            for nd_from, nds_to in self.labels['src2end']['test'].items():
                 for nd_to in nds_to:
 
-                    inputs_batch['pos'].append(self._get_pair_features(nd_from, nd_to))
+                    pos_pair_features = self._get_pair_features(nd_from, nd_to)
+                    if len(pos_pair_features)<1 or len(pos_pair_features)<max_feat_len:
+                        continue
+                    if max_feat_len<len(pos_pair_features):
+                        max_feat_len=len(pos_pair_features)
+                    inputs_batch['pos'].append(pos_pair_features)
                     node_pairs['pos'].append([nd_from, nd_to])
 
                     rand_nds = set()
@@ -247,7 +278,11 @@ class Eval_MNA(Eval):
                         while rand_nd_to in rand_nds or rand_nd_to in nds_to:
                             rand_nd_to = to_keys[np.random.randint(0, to_size)]
                         rand_nds.add(rand_nd_to)
-                        inputs_batch['neg'].append(self._get_pair_features(nd_from, rand_nd_to))
+                        neg_pair_features = self._get_pair_features(nd_from, rand_nd_to)
+                        if len(neg_pair_features)<1 or len(neg_pair_features)<max_feat_len:
+                            k-=1
+                            continue
+                        inputs_batch['neg'].append(neg_pair_features)
                         node_pairs['neg'].append([nd_from, rand_nd_to])
 
                     cnt += 1
@@ -262,14 +297,20 @@ class Eval_MNA(Eval):
             cnt = 0
             # print(len(node_pairs['pos']),len(node_pairs['neg']), len(model_res['pos']), len(model_res['neg']))
             for i in range(len(node_pairs['pos'])):
+                is_valid = True
                 # print(model_res['pos'])
                 anchor_dist = model_res['pos'][i][0]
                 wrt_lns += '(%s,%s),%f,%d\n'%(node_pairs['pos'][i][0],node_pairs['pos'][i][1],anchor_dist,1)
                 # print('anchor dist:',anchor_dist)
                 for k in range(n_cands):
+                    if i*n_cands+k>=len(model_res['neg']):
+                        is_valid = False
+                        continue
                     noise_dist = model_res['neg'][i*n_cands+k][0]
                     wrt_lns += '(%s,%s),%f,%d\n'%(node_pairs['neg'][i*n_cands+k][0]\
                                     ,node_pairs['neg'][i*n_cands+k][1],noise_dist,0)
+                if not is_valid:
+                    continue
                 cnt += 1
                 if not cnt%100:
                     fout.write(wrt_lns)

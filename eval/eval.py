@@ -5,7 +5,11 @@ import numpy as np
 import random
 from collections import defaultdict
 import json
-import re,os
+import re
+import sys,os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))#存放c.py所在的绝对路径
+
+sys.path.append(BASE_DIR)
 
 from eval.measures import *
 

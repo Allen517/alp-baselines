@@ -1,0 +1,3 @@
+2020-04-23 15:16:31,074 crossmna.py[line:33] INFO Number of anchors:17
+2020-04-23 15:16:31,074 crossmna.py[line:51] INFO Number of nodes:23
+2020-04-23 15:16:31,078 crossmna.py[line:229] INFO Finish processing batch 1 and loss:56.438894916581475

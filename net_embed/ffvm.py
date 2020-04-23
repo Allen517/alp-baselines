@@ -323,7 +323,6 @@ class FFVM(object):
             self.model.train_one_epoch()
             if i%SAVING_EPOCH==0:
                 self.get_embeddings()
-                print('here')
                 self.save_embeddings('{}.epoch{}'.format(outfile,i))
         self.get_embeddings()
 

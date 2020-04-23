@@ -1,8 +1,19 @@
 # -*- coding=UTF-8 -*-\n
 from eval.eval_mna import Eval_MNA
 from eval.measures import *
+import ast
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def parse_args():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter
@@ -11,7 +22,7 @@ def parse_args():
                         , help='features from source network')
     parser.add_argument('-net-end', required=True, default=None
                         , help='features from end network')
-    parser.add_argument('-use-net', required=True, default=True, type=bool
+    parser.add_argument('-use-net', required=True, default=True, type=str2bool
                         , help='If use structural information in MNA')
     parser.add_argument('-feat-src', required=False, default=None
                         , help='features from source network')

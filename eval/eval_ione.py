@@ -1,5 +1,10 @@
 from __future__ import print_function
 
+import sys,os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))#存放c.py所在的绝对路径
+
+sys.path.append(BASE_DIR)
+
 from eval.eval import *
 
 class Eval_IONE(Eval):

@@ -56,7 +56,7 @@ class Graph():
             return None
         with open(attr_file, 'r') as fin:
             for ln in fin:
-                print(ln)
+                # print(ln)
                 elems = ln.strip().split(',')
                 if elems[0] not in self.look_up_dict:
                     continue

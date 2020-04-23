@@ -17,6 +17,16 @@ import os,sys
 
 from utils.LogHandler import LogHandler
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def parse_args():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
                             conflict_handler='resolve')
@@ -50,11 +60,11 @@ def parse_args():
                         help='Output file')
     parser.add_argument('--log-file', default='ALP',
                         help='logging file')
-    parser.add_argument('--is-valid', default=False, type=bool,
+    parser.add_argument('--is-valid', default=False, type=str2bool,
                         help='If use validation in training')
-    parser.add_argument('--use-net', default=True, type=bool,
+    parser.add_argument('--use-net', default=True, type=str2bool,
                         help='If use structural information in MNA (used in MNA)')
-    parser.add_argument('--early-stop', default=False, type=bool,
+    parser.add_argument('--early-stop', default=False, type=str2bool,
                         help='Early stop')
     parser.add_argument('--lr', default=.01, type=float,
                         help='Learning rate (used in PALE, CrossMNA)')
@@ -94,6 +104,7 @@ def main(args):
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
 
     # args.use_net=False
+    print(args.use_net)
     logger = LogHandler('RUN.'+time.strftime('%Y-%m-%d',time.localtime(time.time())))
     logger.info(args)
 
@@ -102,7 +113,7 @@ def main(args):
     if args.method == 'pale':
         model = PALE(learning_rate=args.lr, batch_size=args.batch_size
                         , n_input=args.input_size, n_hidden=args.hidden_size, n_layer=args.layers
-                        , files=args.embeddings+args.identity_linkage
+                        , files=args.embeddings+[args.identity_linkage]
                         , type_model = args.type_model, is_valid=args.is_valid
                         , log_file=args.log_file, device=args.device)
         losses = np.zeros(MAX_EPOCHS)
@@ -120,7 +131,7 @@ def main(args):
                 if scr_mean>best_scr:
                     best_scr = scr_mean
                     best_epoch = i
-                    model.save_models(args.output)
+                    model.save_model(args.output)
                 if args.early_stop and i>=thres*SAVING_STEP:
                     cnt = 0
                     for k in range(thres-1,-1,-1):

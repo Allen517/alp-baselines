@@ -1,0 +1,10 @@
+2020-04-23 14:41:27,120 pale.py[line:199] INFO Epoch=1, sum of loss=1.3027888357639312
+2020-04-23 14:41:27,123 pale.py[line:199] INFO Epoch=2, sum of loss=1.3580631971359254
+2020-04-23 14:41:27,125 pale.py[line:199] INFO Epoch=3, sum of loss=1.195123815536499
+2020-04-23 14:41:27,128 pale.py[line:199] INFO Epoch=4, sum of loss=1.0981394410133363
+2020-04-23 14:41:27,130 pale.py[line:199] INFO Epoch=5, sum of loss=1.2777931332588195
+2020-04-23 14:41:27,132 pale.py[line:199] INFO Epoch=6, sum of loss=0.975759071111679
+2020-04-23 14:41:27,136 pale.py[line:199] INFO Epoch=7, sum of loss=1.1362012326717377
+2020-04-23 14:41:27,139 pale.py[line:199] INFO Epoch=8, sum of loss=0.8983761578798294
+2020-04-23 14:41:27,142 pale.py[line:199] INFO Epoch=9, sum of loss=1.0433080434799193
+2020-04-23 14:41:27,145 pale.py[line:199] INFO Epoch=10, sum of loss=1.0940040826797486

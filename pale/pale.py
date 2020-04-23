@@ -171,6 +171,7 @@ class PALE(object):
             batch_id += 1
 
         # valid process
+        valid_size=0
         if self.valid:
             valid = valid_iter(self.L, self.valid_sample_size, self.lookup, 'f', 'g')
             if not len(valid['f'])==len(valid['g']):
@@ -198,6 +199,7 @@ class PALE(object):
                                 .format(self.cur_epoch, sum_loss/batch_id))
         self.cur_epoch += 1
 
+        # print(batch_id,valid_size)
         return sum_loss/(batch_id+1e-8), mrr/(valid_size+1e-8)
 
     def _write_in_file(self, filename, vec, tag):

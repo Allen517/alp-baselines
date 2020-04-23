@@ -1,5 +1,10 @@
 from __future__ import print_function
 
+import sys,os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))#存放c.py所在的绝对路径
+
+sys.path.append(BASE_DIR)
+
 import numpy as np
 
 def hamming_distance(vec1, vec2):

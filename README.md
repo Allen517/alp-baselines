@@ -117,7 +117,7 @@ python eval_regal.py -node test.regal.out -linkage data/test.align -n-cands 1 -e
 
 ---
 
-### Notes (Updated 04/23/2020)
+### Notes (Updated 12/8/2021)
 
 Update shell commands for evaluations
 
@@ -161,3 +161,16 @@ mean_mrr:0.41960784313725485, var:0.08660899653979237
 ```
 
 The first and second lines have the same meaning as mentioned above. From the 3rd line to the end, each line has two columns seperated by colon ':', refering the MRR value (1.000000) corresponded to the pair of nodes (e.g., (1,1)). At the last line, we provide statistic results on mean MRR and its variance (calculated by np.mean and np.var).
+
+We also update anchor link prediction methods based on profile, text and trajectory information. Please see the project https://github.com/wsdeprofile/ALP_algorithm, including
+
+* STUL
+```
+Citation: ``Wei Chen, Hongzhi Yin, Weiqing Wang, Lei Zhao, Wen Hua, and Xiaofang Zhou. (2017). Exploiting spatio-temporal user behaviors for user linkage. Proceedings of
+the 2017 ACM on Conference on Information and Knowledge Management - CIKM (pp. 517–526)``
+```
+
+* HYDRA
+```
+Siyuan Liu, Shuhui Wang, Feida Zhu, Jinbo Zhang, and Ramayya Krishnan. (2014). HYDRA: large-scale social identity linkage via heterogeneous behavior modeling. Proceedings of the 2014 ACM SIGMOD International Conference on Management of Data - SIGMOD. (pp. 51–62).
+```

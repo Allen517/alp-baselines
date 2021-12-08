@@ -166,8 +166,8 @@ We also update anchor link prediction methods based on profile, text and traject
 
 * STUL
 ```
-Citation: ``Wei Chen, Hongzhi Yin, Weiqing Wang, Lei Zhao, Wen Hua, and Xiaofang Zhou. (2017). Exploiting spatio-temporal user behaviors for user linkage. Proceedings of
-the 2017 ACM on Conference on Information and Knowledge Management - CIKM (pp. 517–526)``
+Wei Chen, Hongzhi Yin, Weiqing Wang, Lei Zhao, Wen Hua, and Xiaofang Zhou. (2017). Exploiting spatio-temporal user behaviors for user linkage. Proceedings of
+the 2017 ACM on Conference on Information and Knowledge Management - CIKM (pp. 517–526)
 ```
 
 * HYDRA

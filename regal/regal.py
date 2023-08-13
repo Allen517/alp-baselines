@@ -129,6 +129,7 @@ def learn_representations(args):
                             normalize = True, 
                             gammastruc = args.gammastruc, 
                             gammaattr = args.gammaattr)
+    rep_method.p = args.dimensions
     if max_layer is None:
         max_layer = 1000
     print("Learning representations with max layer %d and alpha = %f" % (max_layer, alpha))
